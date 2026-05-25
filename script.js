@@ -425,7 +425,8 @@ const app = {
     comparisons: [],
     currentRating: {
         left: undefined,
-        right: undefined
+        right: undefined,
+        index: undefined
     },
     done: 0,
     total: 0,
@@ -439,6 +440,7 @@ const app = {
             const comparison = app.comparisons.pop();
             app.currentRating.left = comparison.left;
             app.currentRating.right = comparison.right;
+            app.currentRating.index = comparison.cIndex;
             $("button#rating-left").text(app.currentRating.left);
             $("button#rating-right").text(app.currentRating.right);
         } else {
@@ -446,13 +448,69 @@ const app = {
         }
     },
 
-    recordRating: (leftRight) => {
-        const villagerLeft = app.currentRating.left;
-        const villagerRight = app.currentRating.right;
+    getUpper: (villager, currentMap) => {
+        const newHigher = Object.keys(app.ratings[villager]).forEach(villagerRight => {
+            return !currentMap[villagerRight] && (app.ratings[villager][villagerRight] === false);
+        });
+
+        if (newHigher.length) {
+            newHigher.forEach(newVillager => {
+                currentMap[newVillager] = true;
+            });
+            newHigher.forEach(newVillager => {
+                app.getUpper(newVillager, currentMap);
+            });
+            return true;
+        }
+        return false;
+    },
+
+    getLower: (villager, currentMap) => {
+        const newLower = Object.keys(app.ratings[villager]).forEach(villagerLeft => {
+            return !currentMap[villagerRight] && (app.ratings[villager][villagerLeft] === true);
+        });
+
+        if (newLower.length) {
+            newLower.forEach(newVillager => {
+                currentMap[newVillager] = true;
+            });
+            newLower.forEach(newVillager => {
+                app.getLower(newVillager, currentMap);
+            });
+            return true;
+        }
+        return false;
+    },
+
+    recalc: (higher, lower, cIndex) => {
+        const belowLower = {};
+        const aboveHigher = {};
+        const foundBelow = app.getLower(lower, belowLower);
+        const foundAbove = app.getHigher(higher, aboveHigher);
+
+        if (foundBelow) {
+            Object.keys(belowLower).forEach(below => {
+                app.recordPartRating(higher, below, "left", cIndex);
+                // app.ratings[higher][below] = true;
+                // app.ratings[below][higher] = false;
+            });
+        }
+        if (foundAbove) {
+            Object.keys(aboveHigher).forEach(above => {
+                app.recordPartRating(lower, above, "right", cIndex);
+                // app.ratings[lower][above] = false;
+                // app.ratings[above][lower] = true;
+            });
+        }
+        return foundAbove || foundBelow;
+    },
+
+    recordPartRating: (villagerLeft, villagerRight, leftRight, cIndex) => {
         const result = {
             left: villagerLeft,
             right: villagerRight,
-            result: leftRight
+            result: leftRight,
+            index: cIndex
         };
 
         if (leftRight === "left") {
@@ -464,8 +522,24 @@ const app = {
         }
         app.ratingHistory.push(result);
         app.done++;
+    },
+
+    recordRating: (leftRight) => {
+        let didRecalc;
+        const villagerLeft = app.currentRating.left;
+        const villagerRight = app.currentRating.right;
+        app.recordPartRating(villagerLeft, villagerRight, leftRight, app.currentRating.cIndex);
+        if (leftRight === "left") {
+            didRecalc = app.recalc(villagerLeft, villagerRight, app.currentRating.cIndex);
+        } else if (leftRight === "right") {
+            didRecalc = app.recalc(villagerRight, villagerLeft, app.currentRating.cIndex);
+        }
         app.save();
-        app.updateProgress();
+        if (didRecalc) {
+            app.getComparisons();
+        } else {
+            app.updateProgress();
+        }
         app.showVillagers();
     },
 
@@ -475,6 +549,8 @@ const app = {
 
     getComparisons: () => {
         const doneMap = {};
+        app.done = 0;
+        app.total = 0;
         allVillagers.forEach(villager => {
             doneMap[villager] = {};
         });
@@ -482,12 +558,12 @@ const app = {
             allVillagers.forEach(villager2 => {
                 if (villager2 !== villager1) {
                     if (!doneMap[villager1][villager2]) {
-                        app.total++;
                         if (app.ratings[villager1][villager2] === undefined) {
-                            app.comparisons.push({left: villager1, right: villager2});
+                            app.comparisons.push({left: villager1, right: villager2, cIndex: app.total});
                         } else {
                             app.done++;
                         }
+                        app.total++;
                         doneMap[villager1][villager2] = true;
                         doneMap[villager2][villager1] = true;
                     }
@@ -499,11 +575,17 @@ const app = {
 
     undo: () => {
         if (app.ratingHistory.length) {
-            const rating = app.ratingHistory.pop();
-            app.ratings[rating.left][rating.right] = undefined;
-            app.ratings[rating.right][rating.left] = undefined;
-            app.comparisons.push({left: rating.left, right: rating.right});
-            app.done--;
+            // const rating = app.ratingHistory.pop();
+            const cIndex = app.ratingHistory[app.ratingHistory.length - 1].index;
+            const ratingIdxToRemove = app.ratingHistory.findIndex(rating => rating.index === cIndex);
+
+            app.ratingHistory.splice(ratingIdxToRemove).forEach(rating => {
+                app.ratings[rating.left][rating.right] = undefined;
+                app.ratings[rating.right][rating.left] = undefined;
+                app.comparisons.push({left: rating.left, right: rating.right, cIndex: rating.index});
+                app.done--;
+            });
+            
             app.save();
             app.updateProgress();
             app.showVillagers();
