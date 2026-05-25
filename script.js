@@ -427,6 +427,8 @@ const app = {
         left: undefined,
         right: undefined
     },
+    done: 0,
+    total: 0,
 
     showLeaderboard: () => {
 
@@ -461,8 +463,14 @@ const app = {
             app.ratings[villagerRight][villagerLeft] = true;
         }
         app.ratingHistory.push(result);
+        app.done++;
         app.save();
+        app.updateProgress();
         app.showVillagers();
+    },
+
+    updateProgress: () => {
+        $("#done-message").text(`Done ${app.done} of ${app.total} ratings (${Math.round(app.done / app.total * 1000) / 10}%)`);
     },
 
     getComparisons: () => {
@@ -474,8 +482,11 @@ const app = {
             allVillagers.forEach(villager2 => {
                 if (villager2 !== villager1) {
                     if (!doneMap[villager1][villager2]) {
+                        app.total++;
                         if (app.ratings[villager1][villager2] === undefined) {
                             app.comparisons.push({left: villager1, right: villager2});
+                        } else {
+                            app.done++;
                         }
                         doneMap[villager1][villager2] = true;
                         doneMap[villager2][villager1] = true;
@@ -483,6 +494,7 @@ const app = {
                 }
             });
         });
+        app.updateProgress();
     },
 
     undo: () => {
@@ -491,7 +503,9 @@ const app = {
             app.ratings[rating.left][rating.right] = undefined;
             app.ratings[rating.right][rating.left] = undefined;
             app.comparisons.push({left: rating.left, right: rating.right});
+            app.done--;
             app.save();
+            app.updateProgress();
             app.showVillagers();
         }
     },
@@ -506,7 +520,7 @@ const app = {
             data = JSON.parse(localStorage.getItem("acnhSab"));
             if (data) {
                 allVillagers.forEach(villager => {
-                    ratings[villager] = data[villager];
+                    app.ratings[villager] = data[villager];
                 });
             }
         } catch(err) {
