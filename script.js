@@ -429,7 +429,7 @@ const app = {
     },
 
     showLeaderboard: () => {
-        
+
     },
 
     showVillagers: () => {
@@ -517,6 +517,7 @@ const app = {
     initEvents: () => {
         $("button.ratingButton").on("click", (event) => {
             const leftRight = event.currentTarget.id.split("-")[1];
+            app.recordRating(leftRight);
         });
     },
 
