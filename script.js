@@ -246,6 +246,7 @@ const allVillagers = [
 'Merengue',
 'Merry',
 'Midge',
+'Mineru',
 'Mint',
 'Mira',
 'Miranda',
@@ -387,6 +388,7 @@ const allVillagers = [
 'Tom',
 'Truffles',
 'Tucker',
+'Tulin',
 'Tutu',
 'Twiggy',
 'Tybalt',
@@ -636,7 +638,11 @@ const app = {
             data = JSON.parse(localStorage.getItem("acnhSab"));
             if (data) {
                 allVillagers.forEach(villager => {
-                    app.ratings[villager] = data[villager];
+                    if (data[villager]) {
+                        app.ratings[villager] = data[villager];
+                    } else {
+                        app.ratings[villager] = {};
+                    }
                 });
             }
         } catch(err) {
@@ -664,7 +670,6 @@ const app = {
 
     init: () => {
         const leaderboardHtml = allVillagers.reduce((total, villager, vIndex) => {
-            app.ratings[villager] = {};
             return total + `<p class='leaderboardSpot' id='leaderboard-${vIndex + 1}'>${vIndex + 1}.</p>`;
         }, "");
         app.load();
