@@ -581,6 +581,7 @@ const app = {
 
     updateProgress: () => {
         $("#done-message").text(`Done ${app.done} of ${app.total} ratings (${Math.round(app.done / app.total * 1000) / 10}%)`);
+        app.showLeaderboard();
     },
 
     getComparisons: () => {
@@ -672,6 +673,7 @@ const app = {
         const leaderboardHtml = allVillagers.reduce((total, villager, vIndex) => {
             return total + `<p class='leaderboardSpot' id='leaderboard-${vIndex + 1}'>${vIndex + 1}.</p>`;
         }, "");
+        $("#leaderboard").append(leaderboardHtml);
         app.load();
         app.getComparisons();
         app.initEvents();
