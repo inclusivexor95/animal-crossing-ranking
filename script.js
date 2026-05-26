@@ -526,16 +526,16 @@ const app = {
 
         if (foundBelow) {
             Object.keys(belowLower).forEach(below => {
-                app.recordPartRating(higher, below, "left", cIndex);
-                // app.ratings[higher][below] = true;
-                // app.ratings[below][higher] = false;
+                if (app.ratings[higher][below] === undefined) {
+                    app.recordPartRating(higher, below, "left", cIndex);
+                }
             });
         }
         if (foundAbove) {
             Object.keys(aboveHigher).forEach(above => {
-                app.recordPartRating(lower, above, "right", cIndex);
-                // app.ratings[lower][above] = false;
-                // app.ratings[above][lower] = true;
+                if (app.ratings[lower][above] === undefined) {
+                    app.recordPartRating(lower, above, "right", cIndex);
+                }
             });
         }
         return foundAbove || foundBelow;
@@ -564,11 +564,11 @@ const app = {
         let didRecalc;
         const villagerLeft = app.currentRating.left;
         const villagerRight = app.currentRating.right;
-        app.recordPartRating(villagerLeft, villagerRight, leftRight, app.currentRating.cIndex);
+        app.recordPartRating(villagerLeft, villagerRight, leftRight, app.currentRating.index);
         if (leftRight === "left") {
-            didRecalc = app.recalc(villagerLeft, villagerRight, app.currentRating.cIndex);
+            didRecalc = app.recalc(villagerLeft, villagerRight, app.currentRating.index);
         } else if (leftRight === "right") {
-            didRecalc = app.recalc(villagerRight, villagerLeft, app.currentRating.cIndex);
+            didRecalc = app.recalc(villagerRight, villagerLeft, app.currentRating.index);
         }
         app.save();
         if (didRecalc) {
@@ -612,7 +612,6 @@ const app = {
 
     undo: () => {
         if (app.ratingHistory.length) {
-            // const rating = app.ratingHistory.pop();
             const cIndex = app.ratingHistory[app.ratingHistory.length - 1].index;
             const ratingIdxToRemove = app.ratingHistory.findIndex(rating => rating.index === cIndex);
 
@@ -624,7 +623,7 @@ const app = {
             });
             
             app.save();
-            app.updateProgress();
+            app.getComparisons();
             app.showVillagers();
         }
     },
