@@ -418,6 +418,7 @@ const allVillagers = [
 
 
 const app = {
+    lock: false,
     ratings: {
 
     },
@@ -612,8 +613,19 @@ const app = {
 
     initEvents: () => {
         $("button.ratingButton").on("click", (event) => {
-            const leftRight = event.currentTarget.id.split("-")[1];
-            app.recordRating(leftRight);
+            if (!app.lock) {
+                app.lock = true;
+                const leftRight = event.currentTarget.id.split("-")[1];
+                app.recordRating(leftRight);
+                app.lock = false;
+            }
+        });
+        $("button#undo-button").on("click", (event) => {
+            if (!app.lock) {
+                app.lock = true;
+                app.undo();
+                app.lock = false;
+            }
         });
     },
 
