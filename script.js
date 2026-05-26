@@ -424,6 +424,7 @@ const app = {
     },
     ratingHistory: [],
     comparisons: [],
+    leaderboard: {},
     currentRating: {
         left: undefined,
         right: undefined,
@@ -432,8 +433,40 @@ const app = {
     done: 0,
     total: 0,
 
-    showLeaderboard: () => {
+    getNextHighest: (rated, found, currentPlace) => {
+        const nextHighest = rated.find(villager => {
+            if (!found[villager]) {
+                const villagerRights = Object.keys(app.ratings[villager]);
+                return villagerRights.every(villagerRight => {
+                    return found[villagerRight] || app.ratings[villager][villagerRight];
+                });
+            }
+            return false;
+        });
+        if (nextHighest) {
+            app.leaderboard[currentPlace] = nextHighest;
+            found[nextHighest] = true;
+            app.getNextHighest(rated, found, currentPlace + 1);
+        }
+    },
 
+    showLeaderboard: () => {
+        const found = {};
+        const leaderBoardIndices = [];
+
+        const rated = allVillagers.filter((villager, vIndex) => {
+            const leaderBoardIdx = vIndex + 1;
+            app.leaderboard[leaderBoardIdx] = undefined;
+            leaderBoardIndices.push(leaderBoardIdx);
+            const villagerRights = Object.keys(app.ratings[villager]);
+            return villagerRights.length && villagerRights.some(villagerRight => app.ratings[villager][villagerRight] !== undefined);
+        });
+
+        app.getNextHighest(rated, found, 1);
+
+        leaderBoardIndices.forEach(leaderboardIdx => {
+            $("#leaderboard-" + leaderboardIdx).text(app.leaderboard[leaderboardIdx]);
+        });
     },
 
     showVillagers: () => {
@@ -634,7 +667,6 @@ const app = {
             app.ratings[villager] = {};
             return total + `<p class='leaderboardSpot' id='leaderboard-${vIndex + 1}'>${vIndex + 1}.</p>`;
         }, "");
-        // $("div#leaderBoard").append(leaderboardHtml);
         app.load();
         app.getComparisons();
         app.initEvents();
