@@ -449,7 +449,7 @@ const app = {
     },
 
     getUpper: (villager, currentMap) => {
-        const newHigher = Object.keys(app.ratings[villager]).forEach(villagerRight => {
+        const newHigher = Object.keys(app.ratings[villager]).filter(villagerRight => {
             return !currentMap[villagerRight] && (app.ratings[villager][villagerRight] === false);
         });
 
@@ -466,8 +466,8 @@ const app = {
     },
 
     getLower: (villager, currentMap) => {
-        const newLower = Object.keys(app.ratings[villager]).forEach(villagerLeft => {
-            return !currentMap[villagerRight] && (app.ratings[villager][villagerLeft] === true);
+        const newLower = Object.keys(app.ratings[villager]).filter(villagerLeft => {
+            return !currentMap[villagerLeft] && (app.ratings[villager][villagerLeft] === true);
         });
 
         if (newLower.length) {
@@ -486,7 +486,7 @@ const app = {
         const belowLower = {};
         const aboveHigher = {};
         const foundBelow = app.getLower(lower, belowLower);
-        const foundAbove = app.getHigher(higher, aboveHigher);
+        const foundAbove = app.getUpper(higher, aboveHigher);
 
         if (foundBelow) {
             Object.keys(belowLower).forEach(below => {
